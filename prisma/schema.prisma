@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  email      String       @unique
+  username   String       @unique
+  pwd        String
+  role       String
+  firstName  String
+  lastName   String
+  address    Address?
+  resume     Resume?
+  projects   Project[]
+  Skill      Skill[]
+  Contact    Contact[]
+  Formations Formations[]
+  Experience Experience[]
+  Language   Language[]
+  Hobby      Hobby[]
+  Image      Image[]
+}
+
+model Image {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  path        String
+  ProjectMain Project[] @relation("MainImage")
+  Project     Project[] @relation("ProjectImages", fields: [projectIds], references: [id])
+  projectIds  String[]  @db.ObjectId
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String    @db.ObjectId
+  Resume      Resume[]  @relation("ResumeImage")
+}
+
+model Project {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  description      String?
+  visible          Boolean     @default(false)
+  MainImage        Image?      @relation("MainImage", fields: [MainImageId], references: [id])
+  MainImageId      String?     @db.ObjectId
+  ProjectImages    Image[]     @relation("ProjectImages", fields: [projectImagesIds], references: [id])
+  projectImagesIds String[]    @db.ObjectId
+  components       Component[]
+  contributors     String[]
+  skills           Skill[]     @relation(fields: [skillIds], references: [id])
+  skillIds         String[]    @db.ObjectId
+  User             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String      @db.ObjectId
+  published        Boolean     @default(false)
+}
+
+model Component {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String
+  index     Int
+  data      Json
+  Project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?  @db.ObjectId
+}
+
+model Resume {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  description String?
+  title       String?
+  Image       Image?       @relation("ResumeImage", fields: [ImageId], references: [id])
+  ImageId     String?      @db.ObjectId
+  skills      Skill[]
+  contacts    Contact[]
+  experiences Experience[]
+  formations  Formations[]
+  languages   Language[]
+  hobbies     Hobby[]
+  User        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String       @unique @db.ObjectId
+  published   Boolean      @default(false)
+  publishedData Json?
+}
+
+
+model Skill {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  mastery     String
+  logoURL     String?
+  isSoft      Boolean
+  Resume      Resume?   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId    String?   @db.ObjectId
+  Projects    Project[] @relation(fields: [projectsIds], references: [id])
+  projectsIds String[]  @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String    @db.ObjectId
+
+  @@unique([name, userId])
+}
+
+model Experience {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  company     String
+  logoURL     String?
+  description String
+  startDate   String
+  endDate     String?
+  Resume      Resume  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId    String  @db.ObjectId
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String  @db.ObjectId
+
+  @@unique([title, resumeId])
+}
+
+model Formations {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  formationName  String
+  universityName String
+  description    String?
+  startDate      String
+  endDate        String?
+  Resume         Resume  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId       String  @db.ObjectId
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String  @db.ObjectId
+
+  @@unique([formationName, resumeId])
+}
+
+model Contact {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  text     String
+  Resume   Resume? @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId String? @db.ObjectId
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String  @db.ObjectId
+
+  @@unique([title, userId])
+}
+
+model Language {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  level    String
+  Resume   Resume? @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId String? @db.ObjectId
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String  @db.ObjectId
+
+  @@unique([name, userId])
+}
+
+model Hobby {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  Resume      Resume? @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId    String? @db.ObjectId
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String  @db.ObjectId
+
+  @@unique([name, userId])
+}
+
+type Address {
+  street  String
+  city    String
+  state   String
+  zip     String
+  country String
+}
+
